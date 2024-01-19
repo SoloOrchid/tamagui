@@ -1,7 +1,7 @@
 import { AnimatePresence } from '@tamagui/animate-presence'
 import { ArrowLeft, ArrowRight } from '@tamagui/lucide-icons'
-import { useState } from 'react'
-import { Button, Image, XStack, YStack, styled } from 'tamagui'
+import { useEffect, useState } from 'react'
+import { Button, GetProps, Image, View, XStack, YStack, styled } from 'tamagui'
 
 // @ts-ignore
 import photo1 from '../../public/photo1.jpg'
@@ -12,7 +12,7 @@ import photo3 from '../../public/photo3.jpg'
 
 export const images = [photo1, photo2, photo3].map((x) => x.src || x)
 
-const YStackEnterable = styled(YStack, {
+const YStackEnterable = styled(View, {
   zIndex: 1,
   x: 0,
   opacity: 1,
@@ -34,11 +34,13 @@ const YStackEnterable = styled(YStack, {
   } as const,
 })
 
+type Props = GetProps<typeof YStackEnterable>
+type x = Props['direction']
+
 export function AnimationsPresenceDemo() {
   const [[page, direction], setPage] = useState([0, 0])
 
   const imageIndex = wrap(0, images.length, page)
-
   const paginate = (newDirection: number) => {
     setPage([page + newDirection, newDirection])
   }
@@ -52,13 +54,12 @@ export function AnimationsPresenceDemo() {
       width="100%"
       alignItems="center"
     >
-      <AnimatePresence initial={false}>
+      <AnimatePresence initial={false} custom={{ direction }}>
         <YStackEnterable
           key={page}
-          animation="bouncy"
+          animation="slow"
           fullscreen
           x={0}
-          // @ts-ignore bad type todo
           direction={direction}
           debug="verbose"
         >

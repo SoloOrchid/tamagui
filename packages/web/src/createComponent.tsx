@@ -66,6 +66,7 @@ import {
 import { Slot } from './views/Slot'
 import { getThemedChildren } from './views/Theme'
 import { ThemeDebug } from './views/ThemeDebug'
+import { isObj } from './helpers/isObj'
 
 // this appears to fix expo / babel not picking this up sometimes? really odd
 process.env.TAMAGUI_TARGET
@@ -409,24 +410,26 @@ export function createComponent<
     }
 
     // set enter/exit variants onto our new props object
-    if (presenceState && isAnimated && isHydrated) {
-      const enterExitVariant = presenceState?.enterExitVariant
-      const exitVariant = presenceState.exitVariant ?? enterExitVariant
-
+    if (presenceState && isAnimated && isHydrated && staticConfig.variants) {
       if (process.env.NODE_ENV === 'development' && debugProp === 'verbose') {
         console.warn(`has presenceState ${JSON.stringify(presenceState)}`)
       }
-      const enterVariant = presenceState?.enterVariant ?? enterExitVariant
-      if (state.unmounted && enterVariant && staticConfig.variants?.[enterVariant]) {
+      const { enterVariant, exitVariant, enterExitVariant, custom } = presenceState
+      if (isObj(custom)) {
+        Object.assign(props, custom)
+      }
+      const exv = exitVariant ?? enterExitVariant
+      const env = enterVariant ?? enterExitVariant
+      if (state.unmounted && env && staticConfig.variants[env]) {
         if (process.env.NODE_ENV === 'development' && debugProp === 'verbose') {
-          console.warn(`Animating presence ENTER "${enterVariant}"`)
+          console.warn(`Animating presence ENTER "${env}"`)
         }
-        props[enterVariant] = true
-      } else if (isExiting && exitVariant) {
+        props[env] = true
+      } else if (isExiting && exv) {
         if (process.env.NODE_ENV === 'development' && debugProp === 'verbose') {
-          console.warn(`Animating presence EXIT "${exitVariant}"`)
+          console.warn(`Animating presence EXIT "${exv}"`)
         }
-        props[exitVariant] = exitVariant === enterExitVariant ? false : true
+        props[exv] = exitVariant === enterExitVariant ? false : true
       }
     }
 

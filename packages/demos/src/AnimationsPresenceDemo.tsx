@@ -1,7 +1,7 @@
 import { AnimatePresence } from '@tamagui/animate-presence'
 import { ArrowLeft, ArrowRight } from '@tamagui/lucide-icons'
-import { useEffect, useState } from 'react'
-import { Button, GetProps, Image, View, XStack, YStack, styled } from 'tamagui'
+import { useState } from 'react'
+import { Button, GetProps, Image, XStack, YStack, styled } from 'tamagui'
 
 // @ts-ignore
 import photo1 from '../../public/photo1.jpg'
@@ -12,9 +12,10 @@ import photo3 from '../../public/photo3.jpg'
 
 export const images = [photo1, photo2, photo3].map((x) => x.src || x)
 
-const YStackEnterable = styled(View, {
+const GalleryItem = styled(YStack, {
   zIndex: 1,
   x: 0,
+  fullscreen: true,
   opacity: 1,
 
   variants: {
@@ -34,7 +35,7 @@ const YStackEnterable = styled(View, {
   } as const,
 })
 
-type Props = GetProps<typeof YStackEnterable>
+type Props = GetProps<typeof GalleryItem>
 type x = Props['direction']
 
 export function AnimationsPresenceDemo() {
@@ -55,16 +56,9 @@ export function AnimationsPresenceDemo() {
       alignItems="center"
     >
       <AnimatePresence initial={false} custom={{ direction }}>
-        <YStackEnterable
-          key={page}
-          animation="slow"
-          fullscreen
-          x={0}
-          direction={direction}
-          debug="verbose"
-        >
+        <GalleryItem key={page} animation="slow" direction={direction} debug="verbose">
           <Image source={{ uri: images[imageIndex], width: 780, height: 300 }} />
-        </YStackEnterable>
+        </GalleryItem>
       </AnimatePresence>
 
       <Button

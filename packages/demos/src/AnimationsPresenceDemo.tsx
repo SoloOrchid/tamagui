@@ -52,7 +52,7 @@ export function AnimationsPresenceDemo() {
       width="100%"
       alignItems="center"
     >
-      <AnimatePresence>
+      <AnimatePresence initial={false}>
         <YStackEnterable
           key={page}
           animation="bouncy"

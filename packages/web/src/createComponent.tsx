@@ -368,9 +368,8 @@ export function createComponent<
     const presence = (willBeAnimated && animationsConfig?.usePresence?.()) || null
     const presenceState = presence?.[2]
     const isExiting = presenceState?.isPresent === false
-    const isEntering = presenceState?.isPresent === true
-    const enterExitVariant = presenceState?.enterExitVariant
-    const enterVariant = presenceState?.enterVariant ?? enterExitVariant
+    const isEntering =
+      presenceState?.isPresent === true && presenceState.initial !== false
 
     const hasEnterStyle = !!props.enterStyle
     // finish animated logic, avoid isAnimated when unmounted
@@ -411,11 +410,13 @@ export function createComponent<
 
     // set enter/exit variants onto our new props object
     if (presenceState && isAnimated && isHydrated) {
+      const enterExitVariant = presenceState?.enterExitVariant
       const exitVariant = presenceState.exitVariant ?? enterExitVariant
 
       if (process.env.NODE_ENV === 'development' && debugProp === 'verbose') {
         console.warn(`has presenceState ${JSON.stringify(presenceState)}`)
       }
+      const enterVariant = presenceState?.enterVariant ?? enterExitVariant
       if (state.unmounted && enterVariant && staticConfig.variants?.[enterVariant]) {
         if (process.env.NODE_ENV === 'development' && debugProp === 'verbose') {
           console.warn(`Animating presence ENTER "${enterVariant}"`)

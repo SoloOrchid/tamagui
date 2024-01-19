@@ -255,13 +255,12 @@ export const AnimatePresence: React.FunctionComponent<
   childrenToRender = childrenToRender.map((child) => {
     const key = child.key as string | number
     const isExiting = exitingChildren.has(key)
-    const isEnteringWhileExiting = isExiting && child.type !== PresenceChild
 
-    return isExiting && !isEnteringWhileExiting ? (
+    return isExiting ? (
       child
     ) : (
       <PresenceChild
-        key={getChildKey(child) + (isEnteringWhileExiting ? '1' : '')}
+        key={getChildKey(child)}
         isPresent
         exitVariant={exitVariant}
         enterVariant={enterVariant}

@@ -1,12 +1,14 @@
 import { useResponderEvents } from '@tamagui/react-native-use-responder-events'
 import type {
+  StackNonStyleProps,
   StackProps,
-  StackPropsBase,
+  StackStylePropsBase,
   TamaguiComponent,
   TamaguiElement,
   TamaguiTextElement,
+  TextNonStyleProps,
   TextProps,
-  TextPropsBase,
+  TextStylePropsBase,
 } from '@tamagui/web'
 import {
   Stack as WebStack,
@@ -14,8 +16,9 @@ import {
   View as WebView,
   composeEventHandlers,
   setupHooks,
+  styled,
 } from '@tamagui/web'
-import { RefObject, createElement } from 'react'
+import { createElement } from 'react'
 
 import { createOptimizedView } from './createOptimizedView'
 import { getBaseViews } from './getBaseViews'
@@ -27,18 +30,28 @@ import { usePressability } from './vendor/Pressability'
 // adds extra types to View/Stack/Text:
 
 type RNExclusiveViewProps = Omit<RNViewProps, keyof StackProps>
+export interface RNTamaguiViewNonStyleProps
+  extends StackNonStyleProps,
+    RNExclusiveViewProps {}
+
 type RNTamaguiView = TamaguiComponent<
-  StackProps & RNExclusiveViewProps,
+  { expandLater: true },
   TamaguiElement,
-  StackPropsBase & RNExclusiveViewProps,
+  RNTamaguiViewNonStyleProps,
+  StackStylePropsBase,
   void
 >
 
 type RNExclusiveTextProps = Omit<RNTextProps, keyof TextProps>
+export interface RNTamaguiTextNonStyleProps
+  extends TextNonStyleProps,
+    RNExclusiveTextProps {}
+
 type RNTamaguiText = TamaguiComponent<
-  TextProps & RNExclusiveTextProps,
+  { expandLater: true },
   TamaguiTextElement,
-  TextPropsBase & RNExclusiveTextProps,
+  RNTamaguiTextNonStyleProps,
+  TextStylePropsBase,
   void
 >
 
@@ -239,3 +252,40 @@ const dontComposePressabilityKeys = {
 export const View = WebView as any as RNTamaguiView
 export const Stack = WebStack as any as RNTamaguiView
 export const Text = WebText as any as RNTamaguiText
+
+// easily test type declaration output and if it gets messy:
+
+// export const X = styled(WebView, {})
+
+// export const Y = styled(X, {
+//   variants: {
+//     abc: {
+//       true: {},
+//     },
+//   } as const,
+// })
+
+// const x = <Y abc />
+
+// export const Z = styled(Y, {
+//   variants: {
+//     y: {
+//       true: {},
+//     },
+//   } as const,
+// })
+
+// const variants = {
+//   fullscreen: {
+//     true: {},
+//   },
+//   elevation: {
+//     '...size': () => ({}),
+//     ':number': () => ({}),
+//   },
+// } as const
+
+// export const YStack = styled(View, {
+//   flexDirection: 'column',
+//   variants,
+// })

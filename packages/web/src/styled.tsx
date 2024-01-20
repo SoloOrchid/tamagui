@@ -4,37 +4,23 @@ import { mergeVariants } from './helpers/mergeVariants'
 import type { GetRef } from './interfaces/GetRef'
 import { getReactNativeConfig } from './setupReactNative'
 import type {
+  GetBaseStyles,
+  GetFinalProps,
+  GetNonStyledProps,
   GetProps,
-  GetTokenString,
+  GetVariantProps,
   GetVariantValues,
-  MediaProps,
-  PseudoProps,
   StaticConfig,
   StylableComponent,
   TamaguiComponent,
   ThemeValueByCategory,
-  Tokens,
   VariantDefinitions,
   VariantSpreadFunction,
 } from './types'
-import { Stack } from './views/Stack'
 
-type GetBaseProps<A extends StylableComponent> = A extends TamaguiComponent<
-  any,
-  any,
-  infer P
->
-  ? P
-  : GetProps<A>
-
-type GetVariantProps<A extends StylableComponent> = A extends TamaguiComponent<
-  any,
-  any,
-  any,
-  infer V
->
-  ? V
-  : {}
+type AreVariantsUndefined<Variants> =
+  // because we pass in the Generic variants which for some reason has this :)
+  Variants extends void ? true : false
 
 type GetVariantAcceptedValues<V> = V extends Object
   ? {
@@ -44,17 +30,10 @@ type GetVariantAcceptedValues<V> = V extends Object
     }
   : undefined
 
-type ValueOf<T> = T[keyof T]
-type AreVariantsUndefined<V> = V extends undefined
-  ? true
-  : ValueOf<V> extends undefined
-    ? true
-    : false
-
 export function styled<
   ParentComponent extends StylableComponent,
-  Variants extends VariantDefinitions<ParentComponent> | void,
-  StyledStaticConfig extends Partial<StaticConfig>,
+  Variants extends VariantDefinitions<ParentComponent> | void = void,
+  StyledStaticConfig extends Partial<StaticConfig> = {},
 >(
   ComponentIn: ParentComponent,
   // this should be Partial<GetProps<ParentComponent>> but causes excessively deep type issues
@@ -71,10 +50,11 @@ export function styled<
 
   // get parent props without pseudos and medias so we can rebuild both with new variants
   // get parent props without pseudos and medias so we can rebuild both with new variants
-  type ParentPropsBase = GetBaseProps<ParentComponent>
+  type ParentNonStyledProps = GetNonStyledProps<ParentComponent>
+  type ParentStylesBase = GetBaseStyles<ParentComponent>
   type ParentVariants = GetVariantProps<ParentComponent>
 
-  type OurVariantProps = Variants extends undefined
+  type OurVariantProps = AreVariantsUndefined<Variants> extends true
     ? {}
     : GetVariantAcceptedValues<Variants>
 
@@ -95,26 +75,28 @@ export function styled<
       }
     : {}
 
-  type OurPropsBaseBase = ParentPropsBase & MergedVariants & CustomTokenProps
-
   /**
    * de-opting a bit of type niceness because were hitting depth issues too soon
    * before we had:
    *
-   * type OurPropsBase = OurPropsBaseBase & PseudoProps<Partial<OurPropsBaseBase>>
+   * type OurPropsBase = OurStylesBase & PseudoProps<Partial<OurStylesBase>>
    * and then below in type Props you would remove the PseudoProps line
    * that would give you nicely merged pseudo sub-styles but its just too much for TS
    * so now pseudos wont be nicely typed inside media queries, but at least we can nest
    */
 
-  type Props = Variants extends void
-    ? GetProps<ParentComponent>
-    : // start with base props
-      OurPropsBaseBase &
-        // add in pseudo
-        PseudoProps<Partial<OurPropsBaseBase>> &
-        // add in media
-        MediaProps<Partial<OurPropsBaseBase>>
+  type ShoudSkipTypes = ParentComponent extends TamaguiComponent
+    ? AreVariantsUndefined<Variants> extends true
+      ? true
+      : false
+    : false
+
+  type Props = ParentComponent extends TamaguiComponent
+    ? { expandLater: true }
+    : GetFinalProps<
+        ParentNonStyledProps,
+        ParentStylesBase & MergedVariants & CustomTokenProps
+      >
 
   type ParentStaticProperties = {
     [Key in Exclude<
@@ -128,13 +110,17 @@ export function styled<
     >]: ParentComponent[Key]
   }
 
-  type StyledComponent = TamaguiComponent<
-    Props,
-    GetRef<ParentComponent>,
-    ParentPropsBase,
-    MergedVariants,
-    ParentStaticProperties
-  >
+  // type StyledComponent = AreVariantsUndefined<Variants>
+  type StyledComponent = ShoudSkipTypes extends true
+    ? ParentComponent
+    : TamaguiComponent<
+        Props,
+        GetRef<ParentComponent>,
+        ParentNonStyledProps,
+        ParentStylesBase & CustomTokenProps,
+        MergedVariants,
+        ParentStaticProperties
+      >
 
   // validate not using a variant over an existing valid style
   if (process.env.NODE_ENV !== 'production') {
